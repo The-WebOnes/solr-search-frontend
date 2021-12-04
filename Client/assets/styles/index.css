@@ -28,14 +28,31 @@
     justify-content: center;
 }
 
-.dynamic-continer nav button{
+.dynamic-continer nav div{
     width: 100%;
     justify-content: center;
     border: none;
     background: none;
     padding: 1%;
     overflow: hidden;
+    text-align: center;
 }
+
+.dynamic-continer nav div button{
+    width: 100%;
+    justify-content: center;
+    border: 1px;
+    background: none;
+    padding: 1%;
+    overflow: hidden;
+    text-align: center;
+    align-content: center;
+}
+
+.dynamic-continer nav button{
+    width: 100%;
+}
+
 
 .dynamic-continer section{
     width: 70%;
@@ -45,4 +62,8 @@
 .suggestion-container{
     width: 100%;
     text-align: center;
+}
+
+#suggestion-container{
+    display: none;
 }

@@ -608,13 +608,8 @@ let request2 = {
       },
       spellcheck: {
         suggestions: [
-          "vani",
-          {
-            numFound: 3,
-            startOffset: 0,
-            endOffset: 4,
-            suggestion: ["vanit", "vari", "vano"],
-          },
+          "pytho",
+          { numFound: 1, startOffset: 0, endOffset: 5, suggestion: ["python"] },
         ],
         collations: [],
       },
@@ -629,6 +624,9 @@ const SEARCH_INPUT = document.getElementById("SearchInput");
 const SEARCH_BUTTON = document.getElementById("buttonSearch");
 const CONTAINER_RESULTS = document.getElementById("results-container");
 const CONTAINER_FACETS = document.getElementById("facets-container");
+const CONATINER_SUGGESTION = document.getElementById("suggestion-container");
+const CLEAN_FILTERS_BUTTON = document.getElementById("CleanFilter");
+const SUGGESTION_TAG = document.getElementById('correction');
 
 //Lists
 let suggestions = ["Perro", "Gato", "Tortuga", "Perrote"];
@@ -636,8 +634,10 @@ let suggestions = ["Perro", "Gato", "Tortuga", "Perrote"];
 var docs = documento['results']['0']['response']['docs'];
 let facets = documento['results']['0']['facets']['url']['buckets'];
 */
-var docs = {};
+var docs = [];
 var facets = {};
+var correction = {};
+
 //Functions
 function autocomplete(inp, arr) {
   var currentFocus;
@@ -712,8 +712,8 @@ const generateFacets = (facets, container) => {
 };
 
 const getResponse = async (direction) => {
+  container.style.display = 'none';
   try {
-    /*
       let Search = SEARCH_INPUT.value;
       const response = await fetch(direction + `?q=${Search}`,{
           method: 'GET',
@@ -726,11 +726,12 @@ const getResponse = async (direction) => {
       });
       let data = await response.json();
       console.log(data);
-      */
     docs = request2["results"]["0"]["response"]["docs"];
     facets = request2["results"]["0"]["facets"]["url"]["buckets"];
+    correction =  request2["results"]["0"]["spellcheck"]["suggestions"];
     generateResults(docs, CONTAINER_RESULTS);
     generateFacets(facets, CONTAINER_FACETS);
+    getCorrection(correction,CONATINER_SUGGESTION,SUGGESTION_TAG);
   } catch (error) {
     CONTAINER_RESULTS.innerHTML = "ocurrio un error indesperado";
   }
@@ -740,8 +741,28 @@ const tetsFake = (direction) => {
   alert(direction);
   docs = request2["results"]["0"]["response"]["docs"];
   facets = request2["results"]["0"]["facets"]["url"]["buckets"];
+  correction =  request2["results"]["0"]["spellcheck"]["suggestions"];  
   generateResults(docs, CONTAINER_RESULTS);
   generateFacets(facets, CONTAINER_FACETS);
+  getCorrection(correction,CONATINER_SUGGESTION,SUGGESTION_TAG);
+};
+
+const getCorrection = (arrayConter, container,tag) => {
+  if (arrayConter == 0) {
+    return;
+  }
+  console.log(arrayConter);
+  suggestion = arrayConter[1]['suggestion'][0];
+  container.style.display = 'block'
+  tag.innerHTML = `${suggestion}`;
+
+};
+
+const CleanFilter = () => {
+  if (docs.length == 0) {
+    return;
+  }
+  generateResults(docs, CONTAINER_RESULTS);
 };
 
 //Events
@@ -751,9 +772,19 @@ CONTAINER_FACETS.addEventListener("click", (e) => {
   generateResults(result, CONTAINER_RESULTS);
 });
 
+SUGGESTION_TAG.addEventListener("click",()=>{
+  alert(SUGGESTION_TAG.textContent);
+  SEARCH_INPUT.value = SUGGESTION_TAG.textContent;
+  CONATINER_SUGGESTION.style.display = "none";
+});
+
 SEARCH_BUTTON.addEventListener("click", () => {
-  //getResponse(SEARCH_SERVICE);
-  tetsFake(SEARCH_SERVICE);
+  getResponse(SEARCH_SERVICE);
+  //tetsFake(SEARCH_SERVICE);
+});
+
+CLEAN_FILTERS_BUTTON.addEventListener("click", () => {
+  CleanFilter();
 });
 
 //Functions excecution
