@@ -1,5 +1,6 @@
 //Services
 const SEARCH_SERVICE = `http://localhost:8093/query`;
+const SUGGESTION_SERVICE = `http://localhost:8093/suggest`;
 //DOM Elements
 const SEARCH_INPUT = document.getElementById("SearchInput");
 const SEARCH_BUTTON = document.getElementById("buttonSearch");
@@ -104,16 +105,52 @@ const getResponse = async (direction) => {
       },
     });
     let data = await response.json();
-    docs = data["results"]["0"]["response"]["docs"];
-    facets = data["results"]["0"]["facets"]["url"]["buckets"];
-    correction = data["results"]["0"]["spellcheck"]["suggestions"];
-    generateResults(docs, CONTAINER_RESULTS);
-    generateFacets(facets, CONTAINER_FACETS);
-    getCorrection(correction, CONATINER_SUGGESTION, SUGGESTION_TAG);
-    suggestions = getTitle(docs);
-    autocomplete(SEARCH_INPUT, suggestions);
+    console.log(data);
+    if (data!=0) {
+      if (data["results"]['0']['responseHeader']['params']['json'].includes("~")) {
+        alert('Fuzzy Search aplicado');
+      }
+      docs = data["results"]["0"]["response"]["docs"];
+      facets = data["results"]["0"]["facets"]["url"]["buckets"];
+      correction = [];
+      if ('spellcheck' in data["results"]["0"]) {
+      correction = data["results"]["0"]["spellcheck"]["suggestions"];
+      }
+      generateResults(docs, CONTAINER_RESULTS);
+      generateFacets(facets, CONTAINER_FACETS);
+      getCorrection(correction, CONATINER_SUGGESTION, SUGGESTION_TAG);
+    }else{
+      CONTAINER_RESULTS.innerHTML = "No se encontraron resultados";
+    }
+    console.log(data)
+    
   } catch (error) {
     CONTAINER_RESULTS.innerHTML = "ocurrio un error indesperado";
+    console.log(error)
+  }
+};
+
+const getTitlesResponse = async (direction) => {
+  try {
+    let Search = SEARCH_INPUT.value;
+    const response = await fetch(direction + `?q=${Search}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    
+    let data = await response.json();
+    console.log(data);
+    keyWord = SEARCH_INPUT.value;
+    if (keyWord == "") {
+      return;
+    }
+    suggestionArray = data['results']['suggest']['mySuggester'][keyWord]['suggestions'];
+    suggestions = getTitleByJSON(suggestionArray);
+    autocomplete(SEARCH_INPUT, suggestions);
+  } catch (error) {
+    console.log(error);
   }
 };
 
@@ -144,6 +181,18 @@ const getTitle = (arrayTitles) => {
   return titles;
 };
 
+const getTitleByJSON = (json) => {
+  console.log(json)
+  let titles = [];
+  if (json == 0) {
+    return titles;
+  }
+  json.forEach((element) => {
+    titles.push(element["term"]);
+  });
+  return titles;
+};
+
 //Events
 CONTAINER_FACETS.addEventListener("click", (e) => {
   id = e.target.getAttribute("id");
@@ -157,6 +206,7 @@ SUGGESTION_TAG.addEventListener("click", () => {
 });
 
 SEARCH_BUTTON.addEventListener("click", () => {
+  CONATINER_SUGGESTION.style.display = "None";
   getResponse(SEARCH_SERVICE);
 });
 
@@ -164,7 +214,9 @@ CLEAN_FILTERS_BUTTON.addEventListener("click", () => {
   CleanFilter();
 });
 
-SEARCH_INPUT.addEventListener("input", () => {});
+SEARCH_INPUT.addEventListener("input", () => {
+  getTitlesResponse(SUGGESTION_SERVICE)
+});
 
 //Functions excecution
 autocomplete(SEARCH_INPUT, suggestions);
